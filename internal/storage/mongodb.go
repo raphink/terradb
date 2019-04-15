@@ -128,6 +128,20 @@ func (st *MongoDBStorage) RemoveState(name string) (err error) {
 	return
 }
 
+// ListStates returns all state names from TerraDB
+func (st *MongoDBStorage) ListStates() (states []string, err error) {
+	collection := st.client.Database("terradb").Collection("terraform_states")
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+
+	data, err := collection.Distinct(ctx, "name", map[string]interface{}{})
+
+	for _, s := range data {
+		states = append(states, fmt.Sprintf("%s", s))
+	}
+
+	return
+}
+
 // GetState retrieves a Terraform state, at a given serial.
 // If serial is 0, it gets the latest serial
 func (st *MongoDBStorage) GetState(name string, serial int) (document interface{}, err error) {

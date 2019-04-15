@@ -19,6 +19,16 @@ func NewClient(url string) *Client {
 	return &Client{&http.Client{}, url}
 }
 
+// ListStates lists all state names in TerraDB
+func (c *Client) ListStates() (states []string, err error) {
+	err = c.get(&states, "states", nil)
+	if err != nil {
+		return states, fmt.Errorf("failed to retrieve states: %v", err)
+	}
+
+	return
+}
+
 // GetState returns a TerraDB state from its name and serial
 // Use 0 as serial to return the latest version of the state
 func (c *Client) GetState(name string, serial int) (st terraform.State, err error) {

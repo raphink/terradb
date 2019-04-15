@@ -31,6 +31,7 @@ func StartServer(cfg *API, st storage.Storage) {
 	router := mux.NewRouter().StrictSlash(true)
 
 	apiRtr := router.PathPrefix("/v1/states").Subrouter()
+	apiRtr.HandleFunc("/", s.ListStates).Methods("GET")
 	apiRtr.HandleFunc("/{name}", s.InsertState).Methods("POST")
 	apiRtr.HandleFunc("/{name}", s.GetState).Methods("GET")
 	apiRtr.HandleFunc("/{name}", s.RemoveState).Methods("DELETE")

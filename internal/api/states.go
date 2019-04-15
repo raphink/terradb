@@ -48,6 +48,28 @@ func (s *server) InsertState(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func (s *server) ListStates(w http.ResponseWriter, r *http.Request) {
+	states, err := s.st.ListStates()
+	if err != nil {
+		log.Errorf("failed to retrieve states: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("500 - Internal server error: %s", err)))
+		return
+	}
+
+	data, err := json.Marshal(states)
+	if err != nil {
+		log.Errorf("failed to marshal states: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("500 - Internal server error: %s", err)))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+	return
+}
+
 func (s *server) GetState(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
