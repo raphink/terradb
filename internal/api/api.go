@@ -37,6 +37,7 @@ func StartServer(cfg *API, st storage.Storage) {
 	apiRtr.HandleFunc("/{name}", s.RemoveState).Methods("DELETE")
 	apiRtr.HandleFunc("/{name}", s.LockState).Methods("LOCK")
 	apiRtr.HandleFunc("/{name}", s.UnlockState).Methods("UNLOCK")
+	apiRtr.HandleFunc("/{name}/serials", s.ListStateSerials).Methods("GET")
 
 	log.Infof("Listening on %s:%s", cfg.Address, cfg.Port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%s", cfg.Address, cfg.Port), router))

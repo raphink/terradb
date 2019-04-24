@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	//log "github.com/sirupsen/logrus"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -30,6 +32,12 @@ type document struct {
 	Source    string
 	State     interface{}
 	Name      string
+}
+
+type item struct {
+	State struct {
+		Serial int `bson:"serial" json:"word"`
+	}
 }
 
 // NewMongoDB initializes a connection to the defined MongoDB instance.
@@ -66,9 +74,7 @@ func (st *MongoDBStorage) GetLockStatus(name string) (lockStatus interface{}, er
 
 	var data map[string]interface{}
 
-	res := collection.FindOne(ctx, map[string]interface{}{
-		"name": name,
-	})
+	res := collection.FindOne(ctx, bson.M{"name": name})
 	if res.Err() != nil {
 		err = res.Err()
 		return
@@ -133,7 +139,7 @@ func (st *MongoDBStorage) ListStates() (states []string, err error) {
 	collection := st.client.Database("terradb").Collection("terraform_states")
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 
-	data, err := collection.Distinct(ctx, "name", map[string]interface{}{})
+	data, err := collection.Distinct(ctx, "name", options.Distinct())
 
 	for _, s := range data {
 		states = append(states, fmt.Sprintf("%s", s))
@@ -157,11 +163,10 @@ func (st *MongoDBStorage) GetState(name string, serial int) (document interface{
 		filter["state.serial"] = serial
 	}
 
-	err = collection.FindOne(ctx, filter, &options.FindOneOptions{
-		Sort: map[string]interface{}{
-			"state.serial": -1,
-		},
-	}).Decode(&data)
+	err = collection.FindOne(
+		ctx, filter,
+		options.FindOne().SetSort(bson.M{"state.serial": -1}),
+	).Decode(&data)
 
 	if err == mongo.ErrNoDocuments {
 		return nil, nil
@@ -174,6 +179,39 @@ func (st *MongoDBStorage) GetState(name string, serial int) (document interface{
 	if !ok {
 		err = fmt.Errorf("state file not found")
 	}
+	return
+}
+
+// ListStateSerials returns all serials for a given state name from TerraDB
+func (st *MongoDBStorage) ListStateSerials(name string) (serials []string, err error) {
+	collection := st.client.Database("terradb").Collection("terraform_states")
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+
+	log.Println(name)
+
+	cur, err := collection.Find(
+		ctx,
+		bson.M{"name": name},
+	//	options.Find().SetProjection(bson.M{"state.serial": "serial"}),
+	)
+	if err != nil {
+		return serials, fmt.Errorf("failed to list serials: %v", err)
+	}
+
+	defer cur.Close(context.Background())
+
+	for cur.Next(nil) {
+		item := item{}
+		err = cur.Decode(&item)
+
+		log.Println(item)
+
+		if err != nil {
+			return serials, fmt.Errorf("failed to decode serial: %v", err)
+		}
+		serials = append(serials, fmt.Sprintf("%v", item.State.Serial))
+	}
+
 	return
 }
 

@@ -111,6 +111,30 @@ func (s *server) GetState(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func (s *server) ListStateSerials(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+
+	serials, err := s.st.ListStateSerials(params["name"])
+	if err != nil {
+		log.Errorf("failed to retrieve state serials: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("500 - Internal server error: %s", err)))
+		return
+	}
+
+	data, err := json.Marshal(serials)
+	if err != nil {
+		log.Errorf("failed to marshal state serials: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("500 - Internal server error: %s", err)))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+	return
+}
+
 func (s *server) RemoveState(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 

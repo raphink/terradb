@@ -44,6 +44,16 @@ func (c *Client) GetState(name string, serial int) (st terraform.State, err erro
 	return
 }
 
+// ListStateSerials lists all serials of a state in TerraDB
+func (c *Client) ListStateSerials(name string) (serials []string, err error) {
+	err = c.get(&serials, "states/"+name+"/serials", nil)
+	if err != nil {
+		return serials, fmt.Errorf("failed to retrieve state serials: %v", err)
+	}
+
+	return
+}
+
 func (c *Client) get(v interface{}, path string, params map[string]string) error {
 	req, err := http.NewRequest("GET", c.URL+"/"+path, nil)
 	if err != nil {
