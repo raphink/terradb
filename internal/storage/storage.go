@@ -20,7 +20,7 @@ type DocumentCollection struct {
 		Total int `json:"total"`
 		Page  int `json:"page"`
 	} `json:"metadata"`
-	Data []Document `json:"data"`
+	Data []*Document `json:"data"`
 }
 
 // ErrNoDocuments

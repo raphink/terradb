@@ -168,12 +168,12 @@ func (st *MongoDBStorage) ListStates(page_num, page_size int) (coll DocumentColl
 		if err != nil {
 			return coll, fmt.Errorf("failed to decode states: %v", err)
 		}
-		/*
-			document.LastModified, err = time.Parse("20060102150405", document.Timestamp)
+		for _, s := range coll.Data {
+			s.LastModified, err = time.Parse("20060102150405", s.Timestamp)
 			if err != nil {
-				return states, fmt.Errorf("failed to convert timestamp: %v", err)
+				return coll, fmt.Errorf("failed to convert timestamp: %v", err)
 			}
-		*/
+		}
 		return
 	}
 
