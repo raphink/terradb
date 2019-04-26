@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/hashicorp/terraform/state"
+	"github.com/hashicorp/terraform/terraform"
 )
 
 func (s *server) InsertState(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +25,7 @@ func (s *server) InsertState(w http.ResponseWriter, r *http.Request) {
 		source = "direct"
 	}
 
-	var document interface{}
+	var document terraform.State
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&document)
 	if err != nil {
